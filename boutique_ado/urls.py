@@ -15,9 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+# For Django to be able to see 'media' url, we need to import these:
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('', include('home.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# ^ to allow Django to see the MEDIA_URL.
+# We need to go to :
+# Import our settings and the static function from django.conf.urls.static
+# And then use the static function to add the MEDIA_URL to our list of URLs.
