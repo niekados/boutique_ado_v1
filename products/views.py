@@ -10,11 +10,39 @@ def all_products(request):
     products = Product.objects.all()
     # we set it to none, just to avoid errors when loading page without a search term
     query = None
-    # same with category
+    # same with category & sort & direction
     categories = None
+    sort = None
+    direction = None
 
     # The search phrase appears as GET 
     if request.GET:
+        if 'sort' in request.GET:
+
+            # To clarify the reason for copying the sort parameter into a new variable called sortkey.
+            # Is because now we've preserved the original field we want it to sort on name.
+            # But we have the actual field we're going to sort on, lower_name in the sort key variable.
+            # If we had just renamed sort itself to lower_name we would have lost the original field name.
+
+            sortkey = request.GET['sort']
+            sort = sortkey
+            if sortkey == 'name':
+                sortkey = 'lower_name'
+                products = products.annotate(lower_name=lower_name)
+
+            if 'direction' in request.GET:
+
+                # Moving on to the direction parameter. All we have to do here is check whether it's descending.
+                # And if so we'll add a minus in front of the sort key using string formatting, which will reverse the order.
+
+                direction = request.GET['direction']
+                if direction == 'desc':
+                    sortkey = f'-{sortkey}'
+
+                # in order to actually sort the products all we need to do is use the order by model method.
+                products = products.order_by(sortkey)
+
+        # If GET has 'category' in it
         if 'category' in request.GET:
             categories = request.GET['category'].split(',')
             products = products.filter(category__name__in=categories)
@@ -32,10 +60,20 @@ def all_products(request):
             queries = Q(name__icontains=query) | Q(description__icontains=query)
             products = products.filter(queries)
 
+    # The last thing I want to do is return the current sorting methodology to the template.
+    # There are plenty of ways to do this but the easiest way is probably
+    # just by using a string such as price_ascending name_descending and so on.
+    # Since we have both the sort and the direction variables stored
+    
+
+    current_sorting = f'{sort}_{direction}'
+
     context = {
         'products': products,
         'search_term': query,
         'current_categories': categories,
+        # Note that the value of 'current_sorting' variable will be the string 'none_none'. If there is no sorting.
+        'current_sorting': current_sorting,
     }
 
     return render(request, 'products/products.html', context)
