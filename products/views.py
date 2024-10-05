@@ -28,7 +28,17 @@ def all_products(request):
             sort = sortkey
             if sortkey == 'name':
                 sortkey = 'lower_name'
-                products = products.annotate(lower_name=lower_name)
+                products = products.annotate(lower_name=Lower('name'))
+            
+            # In the sorting code block here I'll add a conditional to check if the sort key is equal to category.
+            # And if it is I want to adjust it to tack on a double underscore and name.
+            # Remember this double underscore syntax allows us to drill into a related model.
+            # And that works for ordering also.
+            # So by doing this we're effectively changing this line <products = products.order_by(sortkey)> to
+            # products dot order by category double underscore name and of course if the
+            # line above it adds a minus in front of it. it'll just be reversed.
+            if sortkey == 'category':
+                sortkey = 'category__name'
 
             if 'direction' in request.GET:
 
@@ -72,7 +82,7 @@ def all_products(request):
         'products': products,
         'search_term': query,
         'current_categories': categories,
-        # Note that the value of 'current_sorting' variable will be the string 'none_none'. If there is no sorting.
+        # Note that the value of 'current_sorting' variable will be the string 'None_None'. If there is no sorting.
         'current_sorting': current_sorting,
     }
 
