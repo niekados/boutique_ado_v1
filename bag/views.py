@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse, HttpResponse
 
 # Create your views here.
 
@@ -7,6 +7,7 @@ def view_bag(request):
     """A view that renders the shopping bag content page """
 
     return render(request, 'bag/bag.html')
+
 
 def add_to_bag(request, item_id):
     """ add a quantity of the specified products to the shopping bag """
@@ -33,22 +34,18 @@ def add_to_bag(request, item_id):
             bag[item_id] = quantity
 
     request.session['bag'] = bag
- 
+
     return redirect(redirect_url)
 
 
 # add_to_bag view
-# The first thing we need to do is get the quantity from the form.
-# So I can do that here with request.post.get quantity.
+# The first thing we need to do is get the quantity from the form. So I can do that here with request.post.get quantity.
 # And remember that we need to convert it to an integer since it'll come from the template as a string.
-# We'll also want to get the redirect URL from the form so we know
-# where to redirect once the process here is finished.
-# Now for the missing piece of the puzzle. In modern versions of HTTP
-# every request-response cycle between the server and the client
+# We'll also want to get the redirect URL from the form so we know where to redirect once the process here is finished.
+# Now for the missing piece of the puzzle. In modern versions of HTTP every request-response cycle between the server and the client
 # in our case between the django view on the server-side and our form making the request on the client-side.
 # Uses what's called a session, to allow information to be stored until the client and server are done communicating.
-# This is especially handy in a situation like an e-commerce store
-# Because it allows us to store the contents of the shopping bag
+# This is especially handy in a situation like an e-commerce store Because it allows us to store the contents of the shopping bag
 # in the HTTP session while the user browses the site and adds items to be purchased. By storing the shopping bag in the session.
 # It will persist until the user closes their browser so that they can add something to the bag.
 # Then browse to a different part of the site add something else and so on without losing the contents of their bag.
@@ -65,3 +62,78 @@ def add_to_bag(request, item_id):
 # And finally we'll add the item to the bag or update the quantity if it already exists.
 # And then overwrite the variable in the session with the updated version.
 # All that's left now is to import redirect. And then redirect the user back to the redirect URL.
+
+
+def adjust_bag(request, item_id):
+    """Adjust the quantity of the specified product to the specified amount"""
+
+    quantity = int(request.POST.get('quantity'))
+    size = None
+    if 'product_size' in request.POST:
+        size = request.POST['product_size']
+    bag = request.session.get('bag', {})
+
+    if size:
+        if quantity > 0:
+            bag[item_id]['items_by_size'][size] = quantity
+        else:
+            del bag[item_id]['items_by_size'][size]
+            if not bag[item_id]['items_by_size']:
+                bag.pop(item_id)
+    else:
+        if quantity > 0:
+            bag[item_id] = quantity
+        else:
+            bag.pop(item_id)
+
+    request.session['bag'] = bag
+    return redirect(reverse('view_bag'))
+
+# adjust_bag view 
+# which will be pretty similar to the add_to_bag view so I'll copy that to use as a base.
+# It still takes the request and item id as parameters. And the entire top portion will be the same except we don't need the redirect URL since we'll always want
+# to redirect back to the shopping bag page. Remember that this is coming from a form on the shopping bag page which will
+# contain the new quantity the user wants in the bag. So the basic idea here is that if quantity is greater than zero we'll want to set the items quantity
+# accordingly and otherwise we'll just remove the item. If there's a size. Of course we'll need to drill into the
+# items by size dictionary, find that specific size and either set its quantity to the updated one or remove it if the quantity submitted is zero.
+# If there's no size that logic is quite simple and we can remove the item entirely by using the pop function.
+# These two operations are basically the same. They just need to be handled differently due to the more complex structure of the
+# bag for items that have sizes. With that finished we just need to redirect back to the view bag URL. And I'll use the reverse function to do that.
+# Importing it here at the top.
+
+
+def remove_from_bag(request, item_id):
+    """Remove the item from the shopping bag"""
+
+    try:
+        size = None
+        if 'product_size' in request.POST:
+            size = request.POST['product_size']
+        bag = request.session.get('bag', {})
+
+        if size:
+            del bag[item_id]['items_by_size'][size]
+            if not bag[item_id]['items_by_size']:
+                bag.pop(item_id)
+        else:
+            bag.pop(item_id)
+
+        request.session['bag'] = bag
+        return HttpResponse(status=200)
+
+    except Exception as e:
+        return HttpResponse(status=500)
+
+# remove_from_bag view.
+# To allow users to remove items directly without setting quantity to zero. I'll copy the adjust bag view since again this will be similar.
+# And let's update the name and adjust a couple of things. We don't need the quantity in this view since the intended quantity is zero.
+# Now if the user is removing a product with sizes. We want to remove only the specific size they requested.
+# So if size is in request.post. We'll want to delete that size key in the items by size dictionary.
+# Also if that's the only size they had in the bag. In other words, if the items by size dictionary is now empty which will evaluate to false.
+# We might as well remove the entire item id so we don't end up with an empty items by size dictionary hanging around.
+# We should also do this in the adjust bag view if the quantity is set to zero. So I'll copy this part up there and also fix this little typo on the pop function.
+# If there is no size. Again removing the item is as simple as popping it out of the bag.
+# Finally instead of returning a redirect. Because this view will be posted to from a JavaScript function.
+# We want to return an actual 200 HTTP response. Implying that the item was successfully removed.
+# Additionally, I'll wrap this entire block of code in a try block. And catch any exceptions that happen in order to return a 500 server error.
+# In a future video we'll use this variable e to return the actual error message to the template in case anything goes wrong.
