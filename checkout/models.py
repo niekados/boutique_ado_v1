@@ -39,8 +39,8 @@ class Order(models.Model):
         using the free delivery threshold and the standard delivery percentage from our settings file.
         Setting it to zero if the order total is higher than the threshold. And then to calculate the grand total
         """
-        self.order_total = self.lineitems.aggregate(Sum('lineitem_total'))['lineitem_total__sum']
-        if self.order_total < settings.FREE_DELIVERY_THRESHOLD:
+        self.order_total = self.lineitems.aggregate(Sum('lineitem_total'))['lineitem_total__sum'] or 0
+        if self.order_total < settings.FREE_DELIVERY_TRESHOLD:
             self.delivery_cost = self.order_total * settings.STANDARD_DELIVERY_PERCENTAGE / 100
         else:
             self.delivery_cost = 0
