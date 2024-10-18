@@ -24,12 +24,11 @@ class OrderForm(forms.ModelForm):
             'full_name': 'Full Name',
             'email': 'Email Address',
             'phone_number': 'Phone Number',
-            'country': 'Country',
             'postcode': 'Postal Code',
             'town_or_city': 'Town or City',
             'street_address1': 'Street Address 1',
             'street_address2': 'Street Address 2',
-            'county': 'County',
+            'county': 'County, State or Locality',
         }
 
         # Next we're setting the autofocus attribute on the full name field to true
@@ -37,16 +36,17 @@ class OrderForm(forms.ModelForm):
         self.fields['full_name'].widget.attrs['autofocus'] = True
 
         for field in self.fields:
-            # And finally we iterate through the forms fields adding a star to the placeholder
-            # if it's a required field on the model.
-            # Setting all the placeholder attributes to their values in the dictionary above.
-            # Adding a CSS class we'll use later.
-            # And then removing the form fields labels.
-            # Since we won't need them given the placeholders are now set.
-            if self.fields[field].required:
-                placeholder = f'{placeholders[field]} *'
-            else:
-                placeholder = placeholders[field]
+            if field != 'country':
+                # And finally we iterate through the forms fields adding a star to the placeholder
+                # if it's a required field on the model.
+                # Setting all the placeholder attributes to their values in the dictionary above.
+                # Adding a CSS class we'll use later.
+                # And then removing the form fields labels.
+                # Since we won't need them given the placeholders are now set.
+                if self.fields[field].required:
+                    placeholder = f'{placeholders[field]} *'
+                else:
+                    placeholder = placeholders[field]
             self.fields[field].widget.attrs['placeholder'] = placeholder
             self.fields[field].widget.attrs['class'] = 'stripe-style-input'
             self.fields[field].label = False
