@@ -9,6 +9,7 @@ from profiles.models import UserProfile
 
 import json
 import time
+import stripe
 
 
 class StripeWH_Handler:
@@ -76,9 +77,9 @@ class StripeWH_Handler:
         stripe_charge = stripe.Charge.retrieve(
             intent.latest_charge
         )
-        billing_details = stripe_charge.billing_details # updated
+        billing_details = stripe_charge.billing_details  # updated
         shipping_details = intent.shipping
-        grand_total = round(stripe_charge.amount / 100, 2) # updated
+        grand_total = round(stripe_charge.amount / 100, 2)  # updated
 
         # Clean data in shipping details. if adress is empty.
         # I'll replace any empty strings in the shipping details with none.
@@ -87,7 +88,7 @@ class StripeWH_Handler:
             if value == "":
                 shipping_details.address[field] = None
 
-        #Update profileinformation if save_info was checked 
+        # Update profileinformation if save_info was checked
         profile = None
         username = intent.metadata.username
         if username != 'AnonymousUser':
