@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 
 from .models import Product, Category
+from .forms import ProductForm
 
 
 def all_products(request):
@@ -17,7 +18,7 @@ def all_products(request):
     sort = None
     direction = None
 
-    # The search phrase appears as GET 
+    # The search phrase appears as GET
     if request.GET:
         if 'sort' in request.GET:
 
@@ -31,7 +32,7 @@ def all_products(request):
             if sortkey == 'name':
                 sortkey = 'lower_name'
                 products = products.annotate(lower_name=Lower('name'))
-            
+
             # In the sorting code block here I'll add a conditional to check if the sort key is equal to category.
             # And if it is I want to adjust it to tack on a double underscore and name.
             # Remember this double underscore syntax allows us to drill into a related model.
@@ -101,3 +102,14 @@ def product_detail(request, product_id):
     }
 
     return render(request, 'products/product_detail.html', context)
+
+
+def add_product(request):
+    """Add a product to the store"""
+    form = ProductForm()
+    template = 'products/add_product.html'
+    context = {
+        'form': form,
+    }
+
+    return render(request, template, context)
