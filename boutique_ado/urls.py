@@ -18,6 +18,7 @@ from django.urls import path, include
 # For Django to be able to see 'media' url, we need to import these:
 from django.conf import settings
 from django.conf.urls.static import static
+from .views import handler404
 
 
 urlpatterns = [
@@ -29,6 +30,8 @@ urlpatterns = [
     path('checkout/', include('checkout.urls')),
     path('profile/', include('profiles.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler404 = 'boutique_ado.views.handler404'
 
 # ^ to allow Django to see the MEDIA_URL.
 # We need to go to :
